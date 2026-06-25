@@ -1,4 +1,4 @@
-# Generic Verilog Testbench Template
+# Generic Verification Template
 
 This template provides a reusable verification framework for
 **combinational Verilog designs**. The philosophy is simple:
@@ -57,7 +57,143 @@ project/
 
 ------------------------------------------------------------------------
 
-# Testbench
+# Generating Test Vectors using the python model
+
+------------------------------------------------------------------------
+
+## Implementation
+
+``` python
+class VectorWriter:
+
+    def __init__(self,
+                 input_filename="input.txt",
+                 output_filename="expected.txt"):
+
+        self.fin = open(input_filename, "w")
+        self.fexp = open(output_filename, "w")
+
+    def write(self, inputs, outputs):
+
+        self.fin.write(
+            " ".join(map(str, inputs)) + "\n"
+        )
+
+        self.fexp.write(
+            " ".join(map(str, outputs)) + "\n"
+        )
+
+    def close(self):
+
+        self.fin.close()
+        self.fexp.close()
+```
+
+------------------------------------------------------------------------
+
+# Writing Test Vectors
+
+The `write()` method accepts two lists.
+
+``` python
+writer.write(inputs, outputs)
+```
+
+-   `inputs` : List of DUT input signals
+-   `outputs`: List of expected DUT output signals
+
+Each call writes **one complete test vector**.
+
+Example:
+
+``` python
+writer.write(
+    ["00000010", "00000011"], # inputs
+    ["00000101"] # outputs
+)
+```
+
+Generates
+
+**input.txt**
+
+    00000010 00000011
+
+**expected.txt**
+
+    00000101
+
+------------------------------------------------------------------------
+
+# Typical Usage
+
+``` python
+writer = VectorWriter()
+
+for A in range(256):
+    for B in range(256):
+
+        expected = my_python_model(A, B)
+
+        writer.write(
+            [
+                format(A, "08b"),
+                format(B, "08b")
+            ],
+            [
+                expected
+            ]
+        )
+
+writer.close()
+```
+
+------------------------------------------------------------------------
+
+# Generated Files
+
+After several calls to `write()`:
+
+**input.txt**
+
+    00000000 00000000
+    00000000 00000001
+    00000000 00000010
+    ...
+
+**expected.txt**
+
+    00000000
+    00000001
+    00000010
+    ...
+
+Each line in both files corresponds to the same test case.
+
+------------------------------------------------------------------------
+
+# Verification Flow
+
+    Python Model
+            │
+            ▼
+    Compute Expected Output
+            │
+            ▼
+    VectorWriter
+            │
+            ├──────────► input.txt
+            │
+            └──────────► expected.txt
+                         │
+                         ▼
+                Verilog Testbench
+                         │
+                         ▼
+                   Compare with DUT
+------------------------------------------------------------------------
+
+# Generic Verilog Testbench
 
 ``` verilog
 `timescale 1ns/1ps
@@ -229,140 +365,3 @@ and summary) can remain unchanged.
 
 //-----------------------------------------------------------------------------------------------------------------------
 
-# Generating Test Vectors using the python model
-
-------------------------------------------------------------------------
-
-## Implementation
-
-``` python
-class VectorWriter:
-
-    def __init__(self,
-                 input_filename="input.txt",
-                 output_filename="expected.txt"):
-
-        self.fin = open(input_filename, "w")
-        self.fexp = open(output_filename, "w")
-
-    def write(self, inputs, outputs):
-
-        self.fin.write(
-            " ".join(map(str, inputs)) + "\n"
-        )
-
-        self.fexp.write(
-            " ".join(map(str, outputs)) + "\n"
-        )
-
-    def close(self):
-
-        self.fin.close()
-        self.fexp.close()
-```
-
-------------------------------------------------------------------------
-
-# Writing Test Vectors
-
-The `write()` method accepts two lists.
-
-``` python
-writer.write(inputs, outputs)
-```
-
--   `inputs` : List of DUT input signals
--   `outputs`: List of expected DUT output signals
-
-Each call writes **one complete test vector**.
-
-Example:
-
-``` python
-writer.write(
-    ["00000010", "00000011"], # inputs
-    ["00000101"] # outputs
-)
-```
-
-Generates
-
-**input.txt**
-
-    00000010 00000011
-
-**expected.txt**
-
-    00000101
-
-------------------------------------------------------------------------
-
-# Typical Usage
-
-``` python
-writer = VectorWriter()
-
-for A in range(256):
-    for B in range(256):
-
-        expected = my_python_model(A, B)
-
-        writer.write(
-            [
-                format(A, "08b"),
-                format(B, "08b")
-            ],
-            [
-                expected
-            ]
-        )
-
-writer.close()
-```
-
-------------------------------------------------------------------------
-
-# Generated Files
-
-After several calls to `write()`:
-
-**input.txt**
-
-    00000000 00000000
-    00000000 00000001
-    00000000 00000010
-    ...
-
-**expected.txt**
-
-    00000000
-    00000001
-    00000010
-    ...
-
-Each line in both files corresponds to the same test case.
-
-------------------------------------------------------------------------
-
-# Verification Flow
-
-    Python Model
-            │
-            ▼
-    Compute Expected Output
-            │
-            ▼
-    VectorWriter
-            │
-            ├──────────► input.txt
-            │
-            └──────────► expected.txt
-                         │
-                         ▼
-                Verilog Testbench
-                         │
-                         ▼
-                   Compare with DUT
-
-`VectorWriter` serves as the bridge between the Python reference model
-and the Verilog verification environment.
