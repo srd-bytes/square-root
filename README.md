@@ -365,3 +365,7 @@ and summary) can remain unchanged.
 
 //-----------------------------------------------------------------------------------------------------------------------
 
+
+
+
+Dont fear to make mistakes. If there will be a problem in future i will deal in the future . Deal with best of your capabilities for the current problem. After many reapeatations you will avoid future problems.
